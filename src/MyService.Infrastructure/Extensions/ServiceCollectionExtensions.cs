@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MyService.Application.Interfaces;
 using MyService.Domain.Interfaces;
 using MyService.Infrastructure.Data;
 using MyService.Infrastructure.Repositories;
@@ -16,34 +17,20 @@ public static class ServiceCollectionExtensions
         // 注册通用仓储（新增简单实体无需建接口和实现，直接注入 IRepository<T>）
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-        // 反射自动注册自定义仓储：Domain.Interfaces 中的接口 → Infrastructure.Repositories 中的实现
-        var domainAssembly = AppDomain.CurrentDomain.GetAssemblies()
-            .First(a => a.GetName().Name == "MyService.Domain");
-        var infraAssembly = typeof(AppDbContext).Assembly;
+        // 使用 Scrutor 批量注册自定义仓储（排除通用 Repository<T> 基类）
+        services.Scan(scan => scan
+            .FromAssemblies(typeof(UserRepository).Assembly)
+            .AddClasses(classes => classes.Where(t => t is { IsGenericTypeDefinition: false, Name: { } name }
+                && name.EndsWith("Repository")))
+            .AsImplementedInterfaces()
+            .WithScopedLifetime());
 
-        var repositoryInterfaces = domainAssembly.GetTypes()
-            .Where(t => t.IsInterface && t.Name.EndsWith("Repository"));
-        foreach (var interfaceType in repositoryInterfaces)
-        {
-            var implType = infraAssembly.GetTypes()
-                .FirstOrDefault(t => t.IsClass && !t.IsAbstract && interfaceType.IsAssignableFrom(t));
-            if (implType is not null)
-                services.AddScoped(interfaceType, implType);
-        }
-
-        // 反射自动注册所有服务：Application.Interfaces 中的接口 → Application.Services 中的实现
-        var appAssembly = AppDomain.CurrentDomain.GetAssemblies()
-            .First(a => a.GetName().Name == "MyService.Application");
-
-        var serviceInterfaces = appAssembly.GetTypes()
-            .Where(t => t.IsInterface && t.Name.EndsWith("Service"));
-        foreach (var interfaceType in serviceInterfaces)
-        {
-            var implType = appAssembly.GetTypes()
-                .FirstOrDefault(t => t.IsClass && !t.IsAbstract && interfaceType.IsAssignableFrom(t));
-            if (implType is not null)
-                services.AddScoped(interfaceType, implType);
-        }
+        // 使用 Scrutor 批量注册服务：Application.Interfaces → Application.Services
+        services.Scan(scan => scan
+            .FromAssemblies(typeof(IUserService).Assembly)
+            .AddClasses(classes => classes.Where(t => t.Name.EndsWith("Service")))
+            .AsImplementedInterfaces()
+            .WithScopedLifetime());
 
         return services;
     }
