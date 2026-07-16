@@ -33,7 +33,7 @@ public static class DatabaseInitializer
 
             // 只单独检查该表是否存在
             var exists = db.Database
-                .SqlQuery<int>($"SELECT COUNT(1) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = {tableName}")
+                .SqlQuery<int>($"SELECT COUNT(1) AS Value FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = {tableName}")
                 .FirstOrDefault() > 0;
 
             if (exists) continue;

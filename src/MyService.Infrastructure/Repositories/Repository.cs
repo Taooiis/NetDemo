@@ -25,10 +25,26 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         return await Context.Set<T>().ToListAsync();
     }
 
+    public virtual async Task<IEnumerable<T>> FindAsync(System.Linq.Expressions.Expression<Func<T, bool>> predicate)
+    {
+        return await Context.Set<T>().Where(predicate).ToListAsync();
+    }
+
     public virtual async Task AddAsync(T entity)
     {
         await Context.Set<T>().AddAsync(entity);
         await Context.SaveChangesAsync();
+    }
+
+    public virtual async Task AddRangeAsync(IEnumerable<T> entities, int batchSize = 1000)
+    {
+        var list = entities.ToList();
+        for (var i = 0; i < list.Count; i += batchSize)
+        {
+            var batch = list.Skip(i).Take(batchSize);
+            await Context.Set<T>().AddRangeAsync(batch);
+            await Context.SaveChangesAsync();
+        }
     }
 
     public virtual async Task UpdateAsync(T entity)

@@ -17,6 +17,7 @@ builder.Services.AddOpenApiDocument(settings =>
     settings.Title = "MyService API";
     settings.Version = "v1";
     settings.Description = "A DDD-based microservice with EF Core Code First";
+    settings.DocumentProcessors.Add(new MyService.Api.DocumentProcessors.TagDescriptionProcessor());
 });
 
 var app = builder.Build();
@@ -38,21 +39,21 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.CreateMissingTables(new List<Type> { 
-    //    typeof(MyService.Domain.Entities.TreeNode)
+        //typeof(MyService.Domain.Entities.Component)
     });
 }
 
-// 输出本机局域网 IP 和端口，方便局域网访问
-var localIp = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName())
-    .AddressList.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-if (localIp is not null)
-{
-    var urls = new[] { "https://0.0.0.0:7256", "http://0.0.0.0:5049" };
-    foreach (var url in urls)
-    {
-        var uri = new Uri(url);
-        Console.WriteLine($"局域网访问: {url.Replace("0.0.0.0", localIp.ToString())}");
-    }
-}
+//// 输出本机局域网 IP 和端口，方便局域网访问
+//var localIp = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName())
+//    .AddressList.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+//if (localIp is not null)
+//{
+//    var urls = new[] { "https://0.0.0.0:7256", "http://0.0.0.0:5049" };
+//    foreach (var url in urls)
+//    {
+//        var uri = new Uri(url);
+//        Console.WriteLine($"局域网访问: {url.Replace("0.0.0.0", localIp.ToString())}");
+//    }
+//}
 
 app.Run();

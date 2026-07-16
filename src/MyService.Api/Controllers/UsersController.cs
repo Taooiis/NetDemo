@@ -4,6 +4,7 @@ using MyService.Application.Interfaces;
 
 namespace MyService.Api.Controllers;
 
+/// <summary>用户控制器，提供用户信息的 CRUD 操作</summary>
 [ApiController]
 [Route("api/[controller]/[action]")]
 public class UsersController : ControllerBase
