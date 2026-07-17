@@ -32,7 +32,9 @@ public class TreeNodeConfiguration : IEntityTypeConfiguration<TreeNode>
         builder.Property(n => n.Description)
             .HasMaxLength(500);
 
-        // 状态、层级、排序
+        // 状态：int 直接映射
+        builder.Property(n => n.Status)
+            .HasDefaultValue(0);
 
         // 自引用外键：ParentId → Id，级联行为设为 Restrict 防止循环删除
         builder.HasOne(n => n.Parent)

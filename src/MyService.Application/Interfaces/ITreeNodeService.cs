@@ -23,6 +23,9 @@ public interface ITreeNodeService
     /// <summary>移动节点（更换父节点或重排序）</summary>
     Task<TreeNodeDto?> MoveAsync(Guid id, MoveTreeNodeRequest request);
 
+    /// <summary>批量更新节点状态（含父子联动）</summary>
+    Task<int> BatchUpdateStatusAsync(BatchUpdateStatusRequest request);
+
     /// <summary>删除节点及所有子节点</summary>
     Task<bool> DeleteAsync(Guid id);
 }

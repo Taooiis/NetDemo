@@ -1,4 +1,5 @@
 using MyService.Domain.Common;
+using MyService.Domain.Enums;
 
 namespace MyService.Domain.Entities;
 
@@ -14,8 +15,8 @@ public class TreeNode : BaseEntity
     /// <summary>节点描述</summary>
     public string? Description { get; set; }
 
-    /// <summary>状态：true=启用，false=禁用</summary>
-    public bool Status { get; set; } = true;
+    /// <summary>状态：0=未完成 1=进行中 2=已完成</summary>
+    public int Status { get; set; } = (int)TreeNodeStatus.未完成;
 
     /// <summary>关联业务表 ID</summary>
     public Guid? ModelId { get; set; }

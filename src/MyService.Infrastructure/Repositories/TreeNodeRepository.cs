@@ -25,4 +25,35 @@ public class TreeNodeRepository : Repository<TreeNode>, ITreeNodeRepository
             .MaxAsync(n => (int?)n.SortOrder);
         return max ?? 0;
     }
+
+    public async Task UpdateDescendantsStatusAsync(Guid nodeId, int status)
+    {
+        var sql = @"
+            WITH RECURSIVE descendants AS (
+                SELECT Id FROM TreeNodes WHERE Id = {0}
+                UNION ALL
+                SELECT t.Id FROM TreeNodes t
+                INNER JOIN descendants d ON t.ParentId = d.Id
+            )
+            UPDATE TreeNodes SET Status = {1}, UpdatedAt = NOW()
+            WHERE Id IN (SELECT Id FROM descendants)";
+
+        await Context.Database.ExecuteSqlRawAsync(sql, nodeId, status);
+    }
+
+    public async Task<List<TreeNode>> GetAncestorsAsync(Guid nodeId)
+    {
+        var sql = @"
+            WITH RECURSIVE ancestors AS (
+                SELECT * FROM TreeNodes WHERE Id = (SELECT ParentId FROM TreeNodes WHERE Id = {0})
+                UNION ALL
+                SELECT t.* FROM TreeNodes t
+                INNER JOIN ancestors a ON t.Id = a.ParentId
+            )
+            SELECT * FROM ancestors";
+
+        return await Context.Set<TreeNode>()
+            .FromSqlRaw(sql, nodeId)
+            .ToListAsync();
+    }
 }

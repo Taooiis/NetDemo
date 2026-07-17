@@ -61,6 +61,13 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         await Context.SaveChangesAsync();
     }
 
+    public virtual async Task UpdateRangeAsync(IReadOnlyCollection<T> entities)
+    {
+        if (entities.Count == 0) return;
+        Context.Set<T>().UpdateRange(entities);
+        await Context.SaveChangesAsync();
+    }
+
     public virtual async Task DeleteAsync(Guid id)
     {
         var entity = await GetByIdAsync(id);

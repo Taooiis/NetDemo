@@ -13,8 +13,8 @@ public class CreateTreeNodeRequest
     /// <summary>节点描述</summary>
     public string? Description { get; set; }
 
-    /// <summary>状态</summary>
-    public bool Status { get; set; } = true;
+    /// <summary>状态：0=未完成 1=进行中 2=已完成</summary>
+    public int Status { get; set; }
 
     /// <summary>关联业务表 ID</summary>
     public Guid? ModelId { get; set; }
@@ -37,11 +37,24 @@ public class UpdateTreeNodeRequest
     /// <summary>节点描述</summary>
     public string? Description { get; set; }
 
-    /// <summary>状态</summary>
-    public bool Status { get; set; } = true;
+    /// <summary>状态：0=未完成 1=进行中 2=已完成</summary>
+    public int Status { get; set; }
 
     /// <summary>关联业务表 ID</summary>
     public Guid? ModelId { get; set; }
+}
+
+/// <summary>批量更新状态请求</summary>
+public class BatchUpdateStatusRequest
+{
+    /// <summary>节点 ID 列表</summary>
+    [Required]
+    public List<Guid> Ids { get; set; } = new();
+
+    /// <summary>目标状态：0=未完成 1=进行中 2=已完成</summary>
+    [Required]
+    [Range(0, 2)]
+    public int Status { get; set; }
 }
 
 /// <summary>移动树节点请求</summary>
@@ -69,8 +82,8 @@ public class TreeNodeDto
     /// <summary>节点描述</summary>
     public string? Description { get; set; }
 
-    /// <summary>状态</summary>
-    public bool Status { get; set; }
+    /// <summary>状态：0=未完成 1=进行中 2=已完成</summary>
+    public int Status { get; set; }
 
     /// <summary>关联业务表 ID</summary>
     public Guid? ModelId { get; set; }

@@ -17,6 +17,7 @@ public interface IRepository<T> where T : BaseEntity
     Task AddAsync(T entity);
     Task AddRangeAsync(IEnumerable<T> entities, int batchSize = 1000);
     Task UpdateAsync(T entity);
+    Task UpdateRangeAsync(IReadOnlyCollection<T> entities);
     Task DeleteAsync(Guid id);
     Task DeleteRangeAsync(IEnumerable<T> entities);
     Task DeleteRangeAsync(IEnumerable<Guid> ids);

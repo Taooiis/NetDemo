@@ -62,6 +62,14 @@ public class TreeNodesController : ControllerBase
         return node is null ? NotFound() : Ok(node);
     }
 
+    /// <summary>批量更新节点状态（自动父子联动）</summary>
+    [HttpPut]
+    public async Task<ActionResult<int>> BatchUpdateStatus([FromBody] BatchUpdateStatusRequest request)
+    {
+        var count = await _treeNodeService.BatchUpdateStatusAsync(request);
+        return Ok(count);
+    }
+
     /// <summary>移动节点（更换父节点或调整排序）</summary>
     /// <param name="id">节点 GUID</param>
     /// <param name="request">移动目标信息</param>
