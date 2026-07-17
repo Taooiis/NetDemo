@@ -36,6 +36,9 @@ public class TreeNodeConfiguration : IEntityTypeConfiguration<TreeNode>
         builder.Property(n => n.Status)
             .HasDefaultValue(0);
 
+        // 父节点 ID 索引（CTE 递归查询和父子过滤用）
+        builder.HasIndex(n => n.ParentId);
+
         // 自引用外键：ParentId → Id，级联行为设为 Restrict 防止循环删除
         builder.HasOne(n => n.Parent)
             .WithMany(n => n.Children)

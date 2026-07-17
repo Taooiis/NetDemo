@@ -100,12 +100,10 @@ public class TreeNodeService : ITreeNodeService
 
         if (oldStatus != node.Status)
         {
-            // 保存自身，触发变更跟踪
-            await _repository.UpdateAsync(node);
-            // 父变子：CTE 递归更新所有后代
-            await _repository.UpdateDescendantsStatusAsync(id, node.Status);
-            // 子变父：逐层向上聚合祖先状态
-            await UpdateAncestorStatusesAsync(node);
+            var allNodes = (await _repository.GetAllAsync()).ToList();
+            var modified = new HashSet<TreeNode> { node };
+            ApplyBidirectionalSync(allNodes, node, node.Status, modified);
+            await _repository.UpdateRangeAsync(modified);
         }
         else
         {
@@ -207,54 +205,75 @@ public class TreeNodeService : ITreeNodeService
     /// <summary>批量更新节点状态，每个节点触发双向联动</summary>
     public async Task<int> BatchUpdateStatusAsync(BatchUpdateStatusRequest request)
     {
-        var count = 0;
+        var allNodes = (await _repository.GetAllAsync()).ToList();
+        var modified = new HashSet<TreeNode>();
+
         foreach (var id in request.Ids.Distinct())
         {
-            var node = await _repository.GetByIdAsync(id);
+            var node = allNodes.FirstOrDefault(n => n.Id == id);
             if (node is null || node.Status == request.Status) continue;
 
             node.Status = request.Status;
             node.UpdatedAt = DateTime.UtcNow;
-            await _repository.UpdateAsync(node);
-            count++;
+            modified.Add(node);
 
-            // 父变子：CTE 递归更新所有后代
-            await _repository.UpdateDescendantsStatusAsync(id, request.Status);
-            // 子变父：逐层向上聚合祖先状态
-            await UpdateAncestorStatusesAsync(node);
-        }
-        return count;
-    }
-
-    /// <summary>逐层向上聚合祖先节点状态</summary>
-    private async Task UpdateAncestorStatusesAsync(TreeNode node)
-    {
-        var ancestors = await _repository.GetAncestorsAsync(node.Id);
-        // ancestors 从父节点到根，按 Level 升序（父→祖父→曾祖父）
-        var modified = new List<TreeNode>();
-
-        foreach (var ancestor in ancestors.OrderByDescending(a => a.Level))
-        {
-            var children = await _repository.GetChildrenAsync(ancestor.Id);
-            var newStatus = AggregateChildStatus(children);
-            if (ancestor.Status == newStatus) continue;
-            ancestor.Status = newStatus;
-            ancestor.UpdatedAt = DateTime.UtcNow;
-            modified.Add(ancestor);
+            ApplyBidirectionalSync(allNodes, node, request.Status, modified);
         }
 
         if (modified.Count > 0)
             await _repository.UpdateRangeAsync(modified);
+
+        return modified.Count;
+    }
+
+    /// <summary>双向联动：向下传播子节点 + 向上聚合父节点</summary>
+    private static void ApplyBidirectionalSync(
+        List<TreeNode> allNodes, TreeNode node, int newStatus, HashSet<TreeNode> modified)
+    {
+        UpdateChildrenStatus(allNodes, node.Id, newStatus, modified);
+        UpdateParentStatus(allNodes, node.ParentId, modified);
+    }
+
+    /// <summary>递归向下更新所有后代状态</summary>
+    private static void UpdateChildrenStatus(
+        List<TreeNode> allNodes, Guid parentId, int status, HashSet<TreeNode> modified)
+    {
+        foreach (var child in allNodes.Where(n => n.ParentId == parentId))
+        {
+            if (child.Status == status) continue;
+            child.Status = status;
+            child.UpdatedAt = DateTime.UtcNow;
+            modified.Add(child);
+            UpdateChildrenStatus(allNodes, child.Id, status, modified);
+        }
+    }
+
+    /// <summary>逐层向上聚合父节点状态</summary>
+    private static void UpdateParentStatus(
+        List<TreeNode> allNodes, Guid? parentId, HashSet<TreeNode> modified)
+    {
+        if (parentId is null) return;
+
+        var parent = allNodes.FirstOrDefault(n => n.Id == parentId);
+        if (parent is null) return;
+
+        var newStatus = AggregateChildStatus(allNodes, parent.Id);
+        if (parent.Status == newStatus) return;
+
+        parent.Status = newStatus;
+        parent.UpdatedAt = DateTime.UtcNow;
+        modified.Add(parent);
+        UpdateParentStatus(allNodes, parent.ParentId, modified);
     }
 
     /// <summary>聚合子节点状态：全部完成→完成，有进行中→进行中，否则未完成</summary>
-    private static int AggregateChildStatus(IEnumerable<TreeNode> children)
+    private static int AggregateChildStatus(List<TreeNode> allNodes, Guid parentId)
     {
-        var list = children.ToList();
-        if (list.Count == 0) return (int)Domain.Enums.TreeNodeStatus.未完成;
-        if (list.Any(c => c.Status == (int)Domain.Enums.TreeNodeStatus.进行中))
+        var children = allNodes.Where(n => n.ParentId == parentId).ToList();
+        if (children.Count == 0) return (int)Domain.Enums.TreeNodeStatus.未完成;
+        if (children.Any(c => c.Status == (int)Domain.Enums.TreeNodeStatus.进行中))
             return (int)Domain.Enums.TreeNodeStatus.进行中;
-        if (list.All(c => c.Status == (int)Domain.Enums.TreeNodeStatus.已完成))
+        if (children.All(c => c.Status == (int)Domain.Enums.TreeNodeStatus.已完成))
             return (int)Domain.Enums.TreeNodeStatus.已完成;
         return (int)Domain.Enums.TreeNodeStatus.未完成;
     }

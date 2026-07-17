@@ -10,10 +10,4 @@ public interface ITreeNodeRepository : IRepository<TreeNode>
 
     /// <summary>获取指定父节点下同级最大排序号</summary>
     Task<int> GetMaxSortOrderAsync(Guid? parentId);
-
-    /// <summary>递归 CTE 更新指定节点及其所有后代的状态</summary>
-    Task UpdateDescendantsStatusAsync(Guid nodeId, int status);
-
-    /// <summary>递归 CTE 获取从父节点到根的所有祖先节点</summary>
-    Task<List<TreeNode>> GetAncestorsAsync(Guid nodeId);
 }

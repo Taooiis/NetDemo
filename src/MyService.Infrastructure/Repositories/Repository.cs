@@ -33,7 +33,7 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         return await Context.Set<T>().ToListAsync();
     }
 
-    public virtual async Task<IEnumerable<T>> FindAsync(System.Linq.Expressions.Expression<Func<T, bool>> predicate)
+    public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
     {
         return await Context.Set<T>().Where(predicate).ToListAsync();
     }
