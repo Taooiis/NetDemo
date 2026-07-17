@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using MyService.Domain.Common;
 
 namespace MyService.Domain.Interfaces;
@@ -18,4 +19,6 @@ public interface IRepository<T> where T : BaseEntity
     Task UpdateAsync(T entity);
     Task DeleteAsync(Guid id);
     Task DeleteRangeAsync(IEnumerable<T> entities);
+    Task DeleteRangeAsync(IEnumerable<Guid> ids);
+    Task DeleteRangeAsync<TProperty>(IEnumerable<TProperty> values, Expression<Func<T, TProperty>> propertySelector);
 }

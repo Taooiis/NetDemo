@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using MyService.Domain.Common;
 using MyService.Domain.Interfaces;
@@ -75,6 +76,35 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         var list = entities.ToList();
         if (list.Count == 0) return;
         Context.Set<T>().RemoveRange(list);
+        await Context.SaveChangesAsync();
+    }
+
+    public virtual async Task DeleteRangeAsync(IEnumerable<Guid> ids)
+    {
+        var idList = ids.ToList();
+        if (idList.Count == 0) return;
+
+        await DeleteRangeAsync(idList, e => e.Id);
+    }
+
+    public virtual async Task DeleteRangeAsync<TProperty>(
+        IEnumerable<TProperty> values, Expression<Func<T, TProperty>> propertySelector)
+    {
+        var valueList = values.ToList();
+        if (valueList.Count == 0) return;
+
+        var param = Expression.Parameter(typeof(T), "e");
+        var prop = Expression.Property(param, ((MemberExpression)propertySelector.Body).Member.Name);
+        Expression? body = null;
+        foreach (var value in valueList)
+        {
+            var eq = Expression.Equal(prop, Expression.Constant(value, typeof(TProperty)));
+            body = body is null ? eq : Expression.OrElse(body, eq);
+        }
+
+        var predicate = Expression.Lambda<Func<T, bool>>(body!, param);
+        var entities = await Context.Set<T>().Where(predicate).ToListAsync();
+        Context.Set<T>().RemoveRange(entities);
         await Context.SaveChangesAsync();
     }
 }

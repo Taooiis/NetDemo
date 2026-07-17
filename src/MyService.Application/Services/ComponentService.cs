@@ -66,8 +66,7 @@ public class ComponentService : IComponentService
         var requestList = requests.ToList();
         var componentIds = requestList.Select(r => r.ComponentId).ToList();
 
-        await _repository.DeleteRangeAsync(
-            await _repository.FindAsync(c => componentIds.Contains(c.ComponentId)));
+        await _repository.DeleteRangeAsync(componentIds, c => c.ComponentId);
 
         var entities = requestList.Select(MapToEntity).ToList();
         await _repository.AddRangeAsync(entities);
