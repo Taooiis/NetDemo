@@ -32,15 +32,7 @@ public class TreeNodeConfiguration : IEntityTypeConfiguration<TreeNode>
         builder.Property(n => n.Description)
             .HasMaxLength(500);
 
-        // 状态、层级、排序均为必填
-        builder.Property(n => n.Status)
-            .IsRequired();
-
-        builder.Property(n => n.Level)
-            .IsRequired();
-
-        builder.Property(n => n.SortOrder)
-            .IsRequired();
+        // 状态、层级、排序
 
         // 自引用外键：ParentId → Id，级联行为设为 Restrict 防止循环删除
         builder.HasOne(n => n.Parent)

@@ -10,11 +10,6 @@ public class CreateTreeNodeRequest
     [StringLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>节点编码（最长 100 字，唯一）</summary>
-    [Required]
-    [StringLength(100)]
-    public string Code { get; set; } = string.Empty;
-
     /// <summary>节点描述</summary>
     public string? Description { get; set; }
 
@@ -38,11 +33,6 @@ public class UpdateTreeNodeRequest
     [Required]
     [StringLength(100)]
     public string Name { get; set; } = string.Empty;
-
-    /// <summary>节点编码（最长 100 字，唯一）</summary>
-    [Required]
-    [StringLength(100)]
-    public string Code { get; set; } = string.Empty;
 
     /// <summary>节点描述</summary>
     public string? Description { get; set; }

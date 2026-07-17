@@ -7,9 +7,7 @@ namespace MyService.Infrastructure.Repositories;
 
 public class UserRepository : Repository<User>, IUserRepository
 {
-    public UserRepository(AppDbContext context) : base(context)
-    {
-    }
+    public UserRepository(AppDbContext context) : base(context) { }
 
     public async Task<User?> GetByUsernameAsync(string username)
     {

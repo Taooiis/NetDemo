@@ -1,8 +1,5 @@
-using System.Linq.Expressions;
-using System.Reflection;
 using MyService.Application.DTOs;
 using MyService.Application.Interfaces;
-using MyService.Domain.Common;
 using MyService.Domain.Entities;
 using MyService.Domain.Interfaces;
 
@@ -24,38 +21,43 @@ public class ComponentService : IComponentService
         return list.Select(MapToDto);
     }
 
-    private static readonly PropertyInfo[] _searchableProps = typeof(Component)
-        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-        .Where(p => p.PropertyType == typeof(string))
-        .ToArray();
-
     public async Task<IEnumerable<ComponentDto>> SearchAsync(ComponentSearchRequest request)
     {
         if (request is null) return await GetAllAsync();
 
-        var param = Expression.Parameter(typeof(Component), "c");
-        Expression? body = null;
-        var containsMethod = typeof(string).GetMethod("Contains", [typeof(string)])!;
-        var requestProps = typeof(ComponentSearchRequest).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var list = await _repository.GetAllAsync();
 
-        foreach (var rp in requestProps)
-        {
-            var value = rp.GetValue(request) as string;
-            if (string.IsNullOrEmpty(value)) continue;
+        if (!string.IsNullOrEmpty(request.ProjectCode))
+            list = list.Where(c => c.ProjectCode.Contains(request.ProjectCode));
+        if (!string.IsNullOrEmpty(request.BuildingCode))
+            list = list.Where(c => c.BuildingCode.Contains(request.BuildingCode));
+        if (!string.IsNullOrEmpty(request.BuildingName))
+            list = list.Where(c => c.BuildingName.Contains(request.BuildingName));
+        if (!string.IsNullOrEmpty(request.FloorCode))
+            list = list.Where(c => c.FloorCode.Contains(request.FloorCode));
+        if (!string.IsNullOrEmpty(request.FloorName))
+            list = list.Where(c => c.FloorName.Contains(request.FloorName));
+        if (!string.IsNullOrEmpty(request.ComponentCode))
+            list = list.Where(c => c.ComponentCode.Contains(request.ComponentCode));
+        if (!string.IsNullOrEmpty(request.ComponentName))
+            list = list.Where(c => c.ComponentName.Contains(request.ComponentName));
+        if (!string.IsNullOrEmpty(request.ComponentType))
+            list = list.Where(c => c.ComponentType.Contains(request.ComponentType));
+        if (!string.IsNullOrEmpty(request.ComponentTypeName))
+            list = list.Where(c => c.ComponentTypeName.Contains(request.ComponentTypeName));
+        if (!string.IsNullOrEmpty(request.PartCode))
+            list = list.Where(c => c.PartCode.Contains(request.PartCode));
+        if (!string.IsNullOrEmpty(request.ModelPartKey))
+            list = list.Where(c => c.ModelPartKey.Contains(request.ModelPartKey));
+        if (!string.IsNullOrEmpty(request.Name))
+            list = list.Where(c => c.Name.Contains(request.Name));
+        if (!string.IsNullOrEmpty(request.SourceCollectionPath))
+            list = list.Where(c => c.SourceCollectionPath.Contains(request.SourceCollectionPath));
+        if (!string.IsNullOrEmpty(request.SourceObjectName))
+            list = list.Where(c => c.SourceObjectName.Contains(request.SourceObjectName));
+        if (!string.IsNullOrEmpty(request.BindingStatus))
+            list = list.Where(c => c.BindingStatus.Contains(request.BindingStatus));
 
-            var prop = _searchableProps.FirstOrDefault(p =>
-                p.Name.Equals(rp.Name, StringComparison.OrdinalIgnoreCase));
-            if (prop is null) continue;
-
-            var member = Expression.MakeMemberAccess(param, prop);
-            var condition = Expression.Call(member, containsMethod, Expression.Constant(value));
-            body = body is null ? condition : Expression.AndAlso(body, condition);
-        }
-
-        if (body is null) return await GetAllAsync();
-
-        var lambda = Expression.Lambda<Func<Component, bool>>(body, param);
-        var list = await _repository.FindAsync(lambda);
         return list.Select(MapToDto);
     }
 
@@ -67,11 +69,8 @@ public class ComponentService : IComponentService
 
     public async Task<ComponentDto?> CreateAsync(CreateComponentRequest request)
     {
-        var existing = (await _repository.FindAsync(c => c.ComponentId == request.ComponentId)).ToList();
-        if (existing.Count > 0)
-        {
-            await _repository.DeleteRangeAsync(existing);
-        }
+        await _repository.DeleteRangeAsync(
+            await _repository.FindAsync(c => c.ComponentId == request.ComponentId));
 
         var entity = MapToEntity(request);
         await _repository.AddAsync(entity);
@@ -83,11 +82,8 @@ public class ComponentService : IComponentService
         var requestList = requests.ToList();
         var componentIds = requestList.Select(r => r.ComponentId).ToList();
 
-        var existing = (await _repository.FindAsync(c => componentIds.Contains(c.ComponentId))).ToList();
-        if (existing.Count > 0)
-        {
-            await _repository.DeleteRangeAsync(existing);
-        }
+        await _repository.DeleteRangeAsync(
+            await _repository.FindAsync(c => componentIds.Contains(c.ComponentId)));
 
         var entities = requestList.Select(MapToEntity).ToList();
         await _repository.AddRangeAsync(entities);

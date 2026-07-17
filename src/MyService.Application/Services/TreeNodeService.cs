@@ -39,33 +39,47 @@ public class TreeNodeService : ITreeNodeService
     /// <summary>创建节点，自动计算 Level 和 SortOrder</summary>
     public async Task<TreeNodeDto?> CreateAsync(CreateTreeNodeRequest request)
     {
-        // 计算排序号：指定值或同级最大 + 1
-        var maxSortOrder = request.SortOrder ?? (await _repository.GetMaxSortOrderAsync(request.ParentId) + 1);
+        var sortOrder = request.SortOrder ?? (await _repository.GetMaxSortOrderAsync(request.ParentId) + 1);
 
-        // 计算层级：根节点为 0，否则为父层级 + 1
-        int level = 0;
-        if (request.ParentId.HasValue)
+        TreeNode node;
+        if (request.ParentId is { } parentId)
         {
-            var parent = await _repository.GetByIdAsync(request.ParentId.Value);
+            var parent = await _repository.GetByIdAsync(parentId);
             if (parent is null) return null;
-            level = parent.Level + 1;
-            if (level > 5) return null; // 超过六层限制
-        }
+            if (parent.Level >= 5) return null;
 
-        var node = new TreeNode
+            node = new TreeNode
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                Code = $"{parent.Code}-{sortOrder:d3}",
+                Description = request.Description,
+                Status = request.Status,
+                ModelId = request.ModelId,
+                ParentId = parentId,
+                Level = parent.Level + 1,
+                SortOrder = sortOrder,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+        }
+        else
         {
-            Id = Guid.NewGuid(),
-            Name = request.Name,
-            Code = request.Code,
-            Description = request.Description,
-            Status = request.Status,
-            ModelId = request.ModelId,
-            ParentId = request.ParentId,
-            Level = level,
-            SortOrder = maxSortOrder,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            node = new TreeNode
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                Code = $"{sortOrder:d3}",
+                Description = request.Description,
+                Status = request.Status,
+                ModelId = request.ModelId,
+                ParentId = null,
+                Level = 0,
+                SortOrder = sortOrder,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+        }
 
         await _repository.AddAsync(node);
         return MapToDto(node);
@@ -78,7 +92,6 @@ public class TreeNodeService : ITreeNodeService
         if (node is null) return null;
 
         node.Name = request.Name;
-        node.Code = request.Code;
         node.Description = request.Description;
         node.Status = request.Status;
         node.ModelId = request.ModelId;
@@ -99,7 +112,7 @@ public class TreeNodeService : ITreeNodeService
         {
             var parent = await _repository.GetByIdAsync(request.ParentId.Value);
             if (parent is null) return null;
-            if (parent.Level + 1 > 5) return null; // 超过六层限制
+            if (parent.Level >= 5) return null;
 
             node.Level = parent.Level + 1;
         }
@@ -122,15 +135,10 @@ public class TreeNodeService : ITreeNodeService
         var node = await _repository.GetByIdAsync(id);
         if (node is null) return false;
 
-        // 查出所有后代并逐个删除
         var allNodes = await _repository.GetAllAsync();
-        var descendants = GetDescendants(allNodes, id);
-        foreach (var desc in descendants)
-        {
-            await _repository.DeleteAsync(desc.Id);
-        }
-
-        await _repository.DeleteAsync(id);
+        var descendants = GetDescendants(allNodes, id).ToList();
+        descendants.Add(node);
+        await _repository.DeleteRangeAsync(descendants);
         return true;
     }
 

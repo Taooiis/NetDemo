@@ -12,7 +12,6 @@ public class ComponentConfiguration : IEntityTypeConfiguration<Component>
         builder.ToTable("Components");
         builder.HasKey(e => e.Id);
 
-        builder.Property(e => e.ComponentId).IsRequired();
         builder.Property(e => e.ProjectCode).HasMaxLength(100);
         builder.Property(e => e.BuildingCode).HasMaxLength(100);
         builder.Property(e => e.BuildingName).HasMaxLength(200);

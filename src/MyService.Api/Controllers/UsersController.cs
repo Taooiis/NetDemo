@@ -51,7 +51,7 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UpdateUserRequest request)
     {
         var user = await _userService.UpdateAsync(id, request);
-        return user is null ? Conflict() : Ok(user);
+        return user is null ? NotFound() : Ok(user);
     }
 
     /// <summary>删除用户</summary>

@@ -28,9 +28,8 @@ public class UserService : IUserService
 
     public async Task<UserDto?> CreateAsync(CreateUserRequest request)
     {
-        var existing = await _userRepository.GetByUsernameAsync(request.Username)
-            ?? await _userRepository.GetByEmailAsync(request.Email);
-        if (existing is not null) return null;
+        if (await _userRepository.GetByUsernameAsync(request.Username) is not null) return null;
+        if (await _userRepository.GetByEmailAsync(request.Email) is not null) return null;
 
         var user = new User
         {
@@ -51,10 +50,11 @@ public class UserService : IUserService
         var user = await _userRepository.GetByIdAsync(id);
         if (user is null) return null;
 
-        var duplicate = await _userRepository.GetByUsernameAsync(request.Username);
-        if (duplicate is not null && duplicate.Id != id) return null;
-        duplicate = await _userRepository.GetByEmailAsync(request.Email);
-        if (duplicate is not null && duplicate.Id != id) return null;
+        var dupUsername = await _userRepository.GetByUsernameAsync(request.Username);
+        if (dupUsername is not null && dupUsername.Id != id) return null;
+
+        var dupEmail = await _userRepository.GetByEmailAsync(request.Email);
+        if (dupEmail is not null && dupEmail.Id != id) return null;
 
         user.Username = request.Username;
         user.Email = request.Email;

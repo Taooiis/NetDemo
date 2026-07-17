@@ -8,9 +8,7 @@ namespace MyService.Infrastructure.Repositories;
 /// <summary>树节点仓储实现（继承通用 CRUD，扩展树结构方法）</summary>
 public class TreeNodeRepository : Repository<TreeNode>, ITreeNodeRepository
 {
-    public TreeNodeRepository(AppDbContext context) : base(context)
-    {
-    }
+    public TreeNodeRepository(AppDbContext context) : base(context) { }
 
     public async Task<IEnumerable<TreeNode>> GetChildrenAsync(Guid parentId)
     {
