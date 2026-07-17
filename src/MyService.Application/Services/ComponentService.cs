@@ -1,5 +1,6 @@
 using MyService.Application.DTOs;
 using MyService.Application.Interfaces;
+using MyService.Common;
 using MyService.Domain.Entities;
 using MyService.Domain.Interfaces;
 
@@ -26,38 +27,21 @@ public class ComponentService : IComponentService
         if (request is null) return await GetAllAsync();
 
         var list = await _repository.GetAllAsync();
-
-        if (!string.IsNullOrEmpty(request.ProjectCode))
-            list = list.Where(c => c.ProjectCode.Contains(request.ProjectCode));
-        if (!string.IsNullOrEmpty(request.BuildingCode))
-            list = list.Where(c => c.BuildingCode.Contains(request.BuildingCode));
-        if (!string.IsNullOrEmpty(request.BuildingName))
-            list = list.Where(c => c.BuildingName.Contains(request.BuildingName));
-        if (!string.IsNullOrEmpty(request.FloorCode))
-            list = list.Where(c => c.FloorCode.Contains(request.FloorCode));
-        if (!string.IsNullOrEmpty(request.FloorName))
-            list = list.Where(c => c.FloorName.Contains(request.FloorName));
-        if (!string.IsNullOrEmpty(request.ComponentCode))
-            list = list.Where(c => c.ComponentCode.Contains(request.ComponentCode));
-        if (!string.IsNullOrEmpty(request.ComponentName))
-            list = list.Where(c => c.ComponentName.Contains(request.ComponentName));
-        if (!string.IsNullOrEmpty(request.ComponentType))
-            list = list.Where(c => c.ComponentType.Contains(request.ComponentType));
-        if (!string.IsNullOrEmpty(request.ComponentTypeName))
-            list = list.Where(c => c.ComponentTypeName.Contains(request.ComponentTypeName));
-        if (!string.IsNullOrEmpty(request.PartCode))
-            list = list.Where(c => c.PartCode.Contains(request.PartCode));
-        if (!string.IsNullOrEmpty(request.ModelPartKey))
-            list = list.Where(c => c.ModelPartKey.Contains(request.ModelPartKey));
-        if (!string.IsNullOrEmpty(request.Name))
-            list = list.Where(c => c.Name.Contains(request.Name));
-        if (!string.IsNullOrEmpty(request.SourceCollectionPath))
-            list = list.Where(c => c.SourceCollectionPath.Contains(request.SourceCollectionPath));
-        if (!string.IsNullOrEmpty(request.SourceObjectName))
-            list = list.Where(c => c.SourceObjectName.Contains(request.SourceObjectName));
-        if (!string.IsNullOrEmpty(request.BindingStatus))
-            list = list.Where(c => c.BindingStatus.Contains(request.BindingStatus));
-
+        list = list.WhereIfPresent(request.ProjectCode, c => c.ProjectCode)
+                   .WhereIfPresent(request.BuildingCode, c => c.BuildingCode)
+                   .WhereIfPresent(request.BuildingName, c => c.BuildingName)
+                   .WhereIfPresent(request.FloorCode, c => c.FloorCode)
+                   .WhereIfPresent(request.FloorName, c => c.FloorName)
+                   .WhereIfPresent(request.ComponentCode, c => c.ComponentCode)
+                   .WhereIfPresent(request.ComponentName, c => c.ComponentName)
+                   .WhereIfPresent(request.ComponentType, c => c.ComponentType)
+                   .WhereIfPresent(request.ComponentTypeName, c => c.ComponentTypeName)
+                   .WhereIfPresent(request.PartCode, c => c.PartCode)
+                   .WhereIfPresent(request.ModelPartKey, c => c.ModelPartKey)
+                   .WhereIfPresent(request.Name, c => c.Name)
+                   .WhereIfPresent(request.SourceCollectionPath, c => c.SourceCollectionPath)
+                   .WhereIfPresent(request.SourceObjectName, c => c.SourceObjectName)
+                   .WhereIfPresent(request.BindingStatus, c => c.BindingStatus);
         return list.Select(MapToDto);
     }
 
