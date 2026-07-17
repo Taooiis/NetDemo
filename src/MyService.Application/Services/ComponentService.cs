@@ -26,23 +26,23 @@ public class ComponentService : IComponentService
     {
         if (request is null) return await GetAllAsync();
 
-        var list = await _repository.GetAllAsync();
-        list = list.WhereIfPresent(request.ProjectCode, c => c.ProjectCode)
-                   .WhereIfPresent(request.BuildingCode, c => c.BuildingCode)
-                   .WhereIfPresent(request.BuildingName, c => c.BuildingName)
-                   .WhereIfPresent(request.FloorCode, c => c.FloorCode)
-                   .WhereIfPresent(request.FloorName, c => c.FloorName)
-                   .WhereIfPresent(request.ComponentCode, c => c.ComponentCode)
-                   .WhereIfPresent(request.ComponentName, c => c.ComponentName)
-                   .WhereIfPresent(request.ComponentType, c => c.ComponentType)
-                   .WhereIfPresent(request.ComponentTypeName, c => c.ComponentTypeName)
-                   .WhereIfPresent(request.PartCode, c => c.PartCode)
-                   .WhereIfPresent(request.ModelPartKey, c => c.ModelPartKey)
-                   .WhereIfPresent(request.Name, c => c.Name)
-                   .WhereIfPresent(request.SourceCollectionPath, c => c.SourceCollectionPath)
-                   .WhereIfPresent(request.SourceObjectName, c => c.SourceObjectName)
-                   .WhereIfPresent(request.BindingStatus, c => c.BindingStatus);
-        return list.Select(MapToDto);
+        var query = _repository.Query;
+        query = query.WhereIfPresent(request.ProjectCode, c => c.ProjectCode)
+                     .WhereIfPresent(request.BuildingCode, c => c.BuildingCode)
+                     .WhereIfPresent(request.BuildingName, c => c.BuildingName)
+                     .WhereIfPresent(request.FloorCode, c => c.FloorCode)
+                     .WhereIfPresent(request.FloorName, c => c.FloorName)
+                     .WhereIfPresent(request.ComponentCode, c => c.ComponentCode)
+                     .WhereIfPresent(request.ComponentName, c => c.ComponentName)
+                     .WhereIfPresent(request.ComponentType, c => c.ComponentType)
+                     .WhereIfPresent(request.ComponentTypeName, c => c.ComponentTypeName)
+                     .WhereIfPresent(request.PartCode, c => c.PartCode)
+                     .WhereIfPresent(request.ModelPartKey, c => c.ModelPartKey)
+                     .WhereIfPresent(request.Name, c => c.Name)
+                     .WhereIfPresent(request.SourceCollectionPath, c => c.SourceCollectionPath)
+                     .WhereIfPresent(request.SourceObjectName, c => c.SourceObjectName)
+                     .WhereIfPresent(request.BindingStatus, c => c.BindingStatus);
+        return (await _repository.ToListAsync(query)).Select(MapToDto);
     }
 
     public async Task<ComponentDto?> GetByIdAsync(Guid id)

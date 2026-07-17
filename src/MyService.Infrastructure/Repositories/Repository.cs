@@ -15,6 +15,13 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         Context = context;
     }
 
+    public virtual IQueryable<T> Query => Context.Set<T>();
+
+    public async Task<List<T>> ToListAsync(IQueryable<T> query) => await query.ToListAsync();
+    public async Task<T?> FirstOrDefaultAsync(IQueryable<T> query) => await query.FirstOrDefaultAsync();
+    public async Task<bool> AnyAsync(IQueryable<T> query) => await query.AnyAsync();
+    public async Task<int> CountAsync(IQueryable<T> query) => await query.CountAsync();
+
     public virtual async Task<T?> GetByIdAsync(Guid id)
     {
         return await Context.Set<T>().FindAsync(id);
