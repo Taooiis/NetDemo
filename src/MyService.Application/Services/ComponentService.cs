@@ -67,6 +67,12 @@ public class ComponentService : IComponentService
 
     public async Task<ComponentDto?> CreateAsync(CreateComponentRequest request)
     {
+        var existing = (await _repository.FindAsync(c => c.ComponentId == request.ComponentId)).ToList();
+        if (existing.Count > 0)
+        {
+            await _repository.DeleteRangeAsync(existing);
+        }
+
         var entity = MapToEntity(request);
         await _repository.AddAsync(entity);
         return MapToDto(entity);
@@ -74,7 +80,16 @@ public class ComponentService : IComponentService
 
     public async Task<int> CreateRangeAsync(IEnumerable<CreateComponentRequest> requests)
     {
-        var entities = requests.Select(MapToEntity).ToList();
+        var requestList = requests.ToList();
+        var componentIds = requestList.Select(r => r.ComponentId).ToList();
+
+        var existing = (await _repository.FindAsync(c => componentIds.Contains(c.ComponentId))).ToList();
+        if (existing.Count > 0)
+        {
+            await _repository.DeleteRangeAsync(existing);
+        }
+
+        var entities = requestList.Select(MapToEntity).ToList();
         await _repository.AddRangeAsync(entities);
         return entities.Count;
     }

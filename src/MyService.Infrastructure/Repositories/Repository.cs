@@ -62,4 +62,12 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
             await Context.SaveChangesAsync();
         }
     }
+
+    public virtual async Task DeleteRangeAsync(IEnumerable<T> entities)
+    {
+        var list = entities.ToList();
+        if (list.Count == 0) return;
+        Context.Set<T>().RemoveRange(list);
+        await Context.SaveChangesAsync();
+    }
 }
